@@ -11,7 +11,7 @@ const TicketCard = ({ ticket }: TicketCardProps) => {
     }));
 
     return drag(
-        <div className={`p-3 bg-white text-black rounded-md shadow-sm cursor-move ${isDragging ? 'opacity-50' : ''
+        <div className={`p-3 bg-white text-black rounded-md shadow-sm ${isDragging ? 'opacity-50' : ''
             }`}
         >
             <h4 className="font-semibold text-sm">{ticket.title}</h4>

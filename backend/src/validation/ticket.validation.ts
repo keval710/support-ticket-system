@@ -63,10 +63,19 @@ const updateTicketStatusSchema = {
     }) 
 }
 
+const updateTicketSchema = {
+    body: {
+        priority: Joi.string().valid(Priority.LOW, Priority.HIGH, Priority.MEDIUM, Priority.URGENT),
+        assignedTo: Joi.string(),
+        status: Joi.string(),
+    }
+}
+
 export default {
     ticketSchema,
     getAllTicketsParamsSchema,
     escalationRuleSchema,
     assignTicketSchema,
-    updateTicketStatusSchema
+    updateTicketStatusSchema,
+    updateTicketSchema
 }

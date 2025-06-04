@@ -42,7 +42,8 @@ export interface TicketDetail {
     description: string;
     priority: string;
     status: Status;
-    assignedTo?: string;
+    department?: Department;
+    assignedTo?: User;
     tags: string[];
     dependencies: string[];
     history: [];
@@ -53,5 +54,20 @@ export interface TicketDetail {
 export interface TicketCreateModalProps {
     statusId?: string;
     assignedTo?: string;
+    userList: User[];
+    departments: Department[];
     onClose: (created: boolean) => void;
+}
+
+export interface FormValues {
+    title: string;
+    description: string;
+    assignedTo: string;
+    priority: '' |'low' | 'medium' | 'high' | 'urgent';
+    departmentId?: string
+}
+
+export interface Department {
+    _id: string;
+    name: string;
 }

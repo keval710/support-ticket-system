@@ -1,23 +1,16 @@
 import { useState } from "react";
 import TicketColumn from "./TicketColumn";
-import type { Status, Ticket, User } from "../types";
-
-interface UserBoardProps {
-    user: User;
-    userTickets: Ticket[];
-    statuses: Status[];
-    onTicketClick: (ticketId: string) => void;
-    onTicketDrop: (ticketId: string, newStatusId: string) => Promise<void>;
-    onTicketCreated: (userId: string) => void;
-}
+import type { UserBoardProps } from "../types";
 
 const UserBoard = ({
-    user, 
-    userTickets, 
-    statuses, 
-    onTicketClick, 
-    onTicketDrop, 
-    onTicketCreated 
+    user,
+    userTickets,
+    statuses,
+    userList,
+    onTicketClick,
+    onTicketDrop,
+    departments,
+    onTicketCreated
 }: UserBoardProps) => {
     const [isUpdating, setIsUpdating] = useState(false);
 
@@ -42,15 +35,17 @@ const UserBoard = ({
                 <h2 className="text-xl font-semibold">{user.name}'s Board</h2>
                 {isUpdating && <span className="text-sm text-gray-500">Updating...</span>}
             </div>
-            <div className="flex gap-4 overflow-x-auto pb-2 w-full">
+            <div className="flex gap-4 overflow-x-auto p-3 w-full">
                 <TicketColumn
-                    title="Unassigned Tickets"
+                    title="Groomed Tickets"
                     tickets={userTickets.filter(ticket => !ticket.status)}
                     onTicketClick={onTicketClick}
                     onTicketCreated={() => onTicketCreated(user._id)}
-                    color="#f3f4f6"
+                    color="	#818181"
+                    departments={departments}
                     onDropTicket={handleTicketDrop}
                     userId={user._id}
+                    userList={userList}
                 />
                 {statuses.map((status) => (
                     <TicketColumn
@@ -59,10 +54,12 @@ const UserBoard = ({
                         tickets={userTickets.filter((t) => t.status?._id === status._id)}
                         statusId={status._id}
                         color={status.color}
+                        departments={departments}
                         onDropTicket={handleTicketDrop}
                         onTicketClick={onTicketClick}
                         onTicketCreated={() => onTicketCreated(user._id)}
                         userId={user._id}
+                        userList={userList}
                     />
                 ))}
             </div>

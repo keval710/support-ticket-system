@@ -48,16 +48,16 @@ export const initializeSocket = (httpServer: HttpServer) => {
             }
         });
 
-        socket.on('ticketCreated', async (ticket) => {
+        socket.on('ticketCreated', async (ticketPayload) => {
             try {
                 // Get the complete ticket data using the service
-                const completeTicket = await ticketService.getTicket(ticket._id);
-                if (completeTicket && completeTicket.assignedTo) {
+                const ticket = await ticketService.createTicket(ticketPayload);
+                if (ticket && ticket.assignedTo) {
                     // Emit to all clients in the user's room
-                    io.to(`user:${completeTicket.assignedTo._id}`).emit('newTicket', completeTicket);
+                    io.to(`user:${ticket.assignedTo._id}`).emit('newTicket', ticket);
                 }
                 // Also emit to all connected clients
-                io.emit('newTicket', completeTicket);
+                io.emit('newTicket', ticket);
             } catch (error) {
                 console.error('Error emitting new ticket:', error);
                 socket.emit('error', { message: 'Failed to emit new ticket' });

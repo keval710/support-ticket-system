@@ -2,27 +2,18 @@ import { useDrop } from "react-dnd";
 import { useState } from "react";
 import TicketCard from "./TicketCard";
 import TicketCreateModal from "./TicketCreateModal";
-import type { Ticket } from "../types";
-
-interface TicketColumnProps {
-    title: string;
-    tickets: Ticket[];
-    statusId?: string;
-    color?: string;
-    userId: string;
-    onDropTicket?: (ticketId: string, newStatusId: string) => Promise<void>;
-    onTicketClick: (ticketId: string) => void;
-    onTicketCreated: () => void;
-}
+import type { TicketColumnProps } from "../types";
 
 const TicketColumn = ({
     title,
     tickets,
     statusId,
-    color = "#6b7280",
+    color,
     userId,
+    userList,
     onDropTicket,
     onTicketClick,
+    departments,
     onTicketCreated,
 }: TicketColumnProps) => {
     const [showCreateModal, setShowCreateModal] = useState(false);
@@ -46,23 +37,27 @@ const TicketColumn = ({
     }));
 
     return drop(
-        <div
-            className={`p-4 rounded-lg shadow-md min-h-[580px] min-w-[300px] max-w-[300px] flex-shrink-0 transition-all duration-300 relative ${isOver ? "bg-opacity-80" : ""} ${isDropping ? "opacity-50" : ""}`}
-            style={{ backgroundColor: color }}
-        >
-            <div className={statusId ? "text-white" : ""}>
-                <div className="flex justify-between items-center mb-2">
-                    <h3 className={`font-bold text-lg ${!statusId ? "text-gray-700" : ""}`}>{title}</h3>
+        <div className={` relative rounded-2xl shadow-xl min-h-[580px] min-w-[300px] max-w-[300px] flex-shrink-0 transition-all duration-300 border border-gray-200 overflow-hidden ${isDropping ? "drop-shadow-lg scale-[0.98]" : ""} ${isOver ? "ring-4 ring-blue-500 opacity-80" : ""}`} style={{ backgroundColor: color }}>
+            {/* Overlay effect for all drop targets except hovered */}
+            {isDropping && !isOver && (
+                <div className="absolute inset-0 bg-black/30 backdrop-blur-sm animate-fade-in z-20 pointer-events-none" />
+            )}
+            <div className="relative z-30 p-4 h-full flex flex-col text-white">
+                {/* Header with bottom border */}
+                <div className="flex justify-between items-center mb-4 pb-4 border-b border-white/30">
+                    <h3 className="font-semibold text-lg tracking-wide">{title}</h3>
                     <button
-                        className={`${statusId ? "bg-white text-black" : "bg-white text-black"} px-2 py-1 rounded text-sm`}
                         onClick={() => setShowCreateModal(true)}
+                        className="bg-white bg-opacity-90 hover:bg-opacity-100 text-sm text-gray-800 font-medium px-3 py-1 rounded-lg shadow-sm hover:shadow-md transition"
                     >
                         + Add
                     </button>
                 </div>
-                <div className="mt-2 space-y-2 overflow-y-auto max-h-[70vh] pr-2">
+
+                {/* Ticket List */}
+                <div className="flex-1 overflow-y-auto space-y-3 pr-2 mt-3 custom-scrollbar">
                     {tickets.map((ticket) => (
-                        <div key={ticket._id} onClick={() => onTicketClick(ticket._id)}>
+                        <div key={ticket._id} onClick={() => onTicketClick(ticket._id)} className="cursor-pointer">
                             <TicketCard ticket={ticket} />
                         </div>
                     ))}
@@ -72,6 +67,8 @@ const TicketColumn = ({
                 <TicketCreateModal
                     statusId={statusId}
                     assignedTo={userId}
+                    userList={userList}
+                    departments={departments}
                     onClose={(created) => {
                         setShowCreateModal(false);
                         if (created) {

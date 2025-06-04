@@ -25,7 +25,7 @@ export interface StatusDocument extends Document {
 export interface DepartmentDocument extends Document {
     name: string;
     description?: string;
-    emails?: string[];
+    email?: string[];
     assignedAdmins?: mongoose.Types.ObjectId[];
     hidden?: boolean;
 }

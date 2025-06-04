@@ -1,96 +1,175 @@
-// src/components/TicketCreateModal.tsx
-import { useState } from 'react';
-import api from '../services/api';
+import { useForm } from 'react-hook-form';
 import { socketService } from '../services/socket';
-import type { TicketCreateModalProps } from '../types';
+import type { FormValues, TicketCreateModalProps } from '../types';
+import { useEffect } from 'react';
 
-const TicketCreateModal = ({ statusId, onClose, assignedTo }: TicketCreateModalProps) => {
-    const [title, setTitle] = useState('');
-    const [description, setDescription] = useState('');
-    const [priority, setPriority] = useState<'low' | 'medium' | 'high'>('low');
-    const [isCreating, setIsCreating] = useState(false);
+const TicketCreateModal = ({ statusId, assignedTo, departments, onClose, userList = [] }: TicketCreateModalProps) => {
+    const {
+        register,
+        handleSubmit,
+        formState: { errors, isSubmitting },
+    } = useForm<FormValues>({
+        defaultValues: {
+            title: '',
+            description: '',
+            priority: '',
+            departmentId: '',
+            assignedTo: assignedTo || '',
+        },
+    });
 
-    const handleCreate = async () => {
-        if (!title || !description) return;
+    // Prevent background scroll when modal is open
+    useEffect(() => {
+        document.body.classList.add('overflow-hidden');
+        return () => {
+            document.body.classList.remove('overflow-hidden');
+        };
+    }, []);
 
-        setIsCreating(true);
+    const onSubmit = async (data: FormValues) => {
         try {
-            const response = await api.post('/api/ticket', {
-                title,
-                description,
-                priority,
-                assignedTo,
+            socketService.emitTicketCreated({
+                ...data,
                 ...(statusId && { status: statusId }),
             });
-
-            // Emit the new ticket event through socket
-            socketService.emitTicketCreated(response.data);
-
             onClose(true);
         } catch (error) {
             console.error('Failed to create ticket', error);
-            setIsCreating(false);
         }
     };
 
     return (
-        <div className="fixed inset-0 bg-black/30 backdrop-blur-sm bg-opacity-40 flex items-center justify-center z-50">
-            <div className="bg-white rounded-lg p-6 w-full max-w-md">
-                <h2 className="text-xl font-semibold mb-4">Create Ticket</h2>
-
-                <div className="space-y-4">
+        <div className="fixed inset-0 bg-black/30 backdrop-blur-xs flex items-center justify-center z-[1000]">
+            <div className="bg-white rounded-2xl p-6 w-full max-w-lg shadow-xl border border-gray-100 animate-fade-in">
+                <h2 className="text-2xl font-bold mb-4 text-center text-gray-800">Create Ticket</h2>
+                <form onSubmit={handleSubmit(onSubmit)} className="space-y-5">
+                    {/* Title */}
                     <div>
-                        <label className="block font-medium">Title</label>
+                        <label className={`block mb-2 text-md font-medium ${errors.title ? 'text-red-700' : 'text-gray-900'}`}>
+                            Title
+                        </label>
                         <input
-                            className="w-full border rounded p-2"
-                            value={title}
-                            onChange={(e) => setTitle(e.target.value)}
+                            className={`w-full text-md rounded-lg block p-2.5 mt-1 focus:outline-none focus:ring-1 ${errors.title
+                                ? 'bg-red-50 border border-red-500 text-red-900 placeholder-red-700 focus:ring-red-500'
+                                : 'bg-white border border-gray-300 text-gray-900 placeholder-gray-400 focus:ring-gray-400'
+                                }`}
+                            {...register('title', { required: 'Title is required' })}
                             placeholder="Enter ticket title"
                         />
+                        {errors.title && (
+                            <p className="mt-2 text-md text-red-600">
+                                <span className="font-medium">{errors.title.message}</span>
+                            </p>
+                        )}
                     </div>
-
+                    {/* Description */}
                     <div>
-                        <label className="block font-medium">Description</label>
+                        <label className={`block mb-2 text-md font-medium ${errors.description ? 'text-red-700' : 'text-gray-700'}`}>
+                            Description
+                        </label>
                         <textarea
-                            className="w-full border rounded p-2"
                             rows={3}
-                            value={description}
-                            onChange={(e) => setDescription(e.target.value)}
+                            className={`w-full text-md rounded-lg block p-2.5 mt-1 resize-none focus:outline-none focus:ring-1 ${errors.description
+                                ? 'bg-red-50 border border-red-500 text-red-900 placeholder-red-700 focus:ring-red-500'
+                                : 'bg-white border border-gray-300 text-gray-900 placeholder-gray-400 focus:ring-gray-400'
+                                }`}
+                            {...register('description', { required: 'Description is required' })}
                             placeholder="Enter ticket description"
                         />
+                        {errors.description && (
+                            <p className="mt-2 text-md text-red-600">
+                                <span className="font-medium">{errors.description.message}</span>
+                            </p>
+                        )}
                     </div>
-
+                    {/* Priority */}
                     <div>
-                        <label className="block font-medium">Priority</label>
+                        <label className={`block mb-2 text-md font-medium ${errors.priority ? 'text-red-700' : 'text-gray-700'}`}>
+                            Priority
+                        </label>
                         <select
-                            className="w-full border rounded p-2"
-                            value={priority}
-                            onChange={(e) => setPriority(e.target.value as 'low' | 'medium' | 'high')}
+                            className={`w-full text-md rounded-lg block p-2.5 mt-1 bg-white focus:outline-none focus:ring-1 ${errors.priority
+                                ? 'bg-red-50 border border-red-500 text-red-900 focus:ring-red-500'
+                                : 'border border-gray-300 text-gray-900 focus:ring-gray-400'
+                                }`}
+                            {...register('priority', { required: 'Priority is required' })}
                         >
+                            <option value="">Select priority</option>
                             <option value="low">Low</option>
                             <option value="medium">Medium</option>
                             <option value="high">High</option>
                             <option value="urgent">Urgent</option>
                         </select>
+                        {errors.priority && (
+                            <p className="mt-2 text-md text-red-600">
+                                <span className="font-medium"> {errors.priority.message}</span>
+                            </p>
+                        )}
                     </div>
-                </div>
-
-                <div className="mt-6 flex justify-end gap-2">
-                    <button
-                        className="bg-gray-300 hover:bg-gray-400 px-4 py-2 rounded"
-                        onClick={() => onClose(false)}
-                        disabled={isCreating}
-                    >
-                        Cancel
-                    </button>
-                    <button
-                        className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700"
-                        onClick={handleCreate}
-                        disabled={isCreating}
-                    >
-                        {isCreating ? 'Creating...' : 'Create'}
-                    </button>
-                </div>
+                    {/* Department */}
+                    <div>
+                        <label className={`block mb-2 text-md font-medium text-gray-700`}>
+                            Department <span className="text-gray-400 text-sm">(optional)</span>
+                        </label>
+                        <select
+                            className={`w-full text-md rounded-lg block p-2.5 mt-1 bg-white focus:outline-none focus:ring-1 ${errors.assignedTo
+                                ? 'bg-red-50 border border-red-500 text-red-900 focus:ring-red-500'
+                                : 'border border-gray-300 text-gray-900 focus:ring-gray-400'
+                                }`}
+                            {...register('departmentId')}
+                        >
+                            <option value="">Select department</option>
+                            {departments.map((d) => (
+                                <option key={d._id} value={d._id}>
+                                    {d.name}
+                                </option>
+                            ))}
+                        </select>
+                    </div>
+                    {/* Assign To */}
+                    <div>
+                        <label className={`block mb-2 text-md font-medium ${errors.assignedTo ? 'text-red-700' : 'text-gray-700'}`}>
+                            Assign to
+                        </label>
+                        <select
+                            className={`w-full text-md rounded-lg block p-2.5 mt-1 bg-white focus:outline-none focus:ring-1 ${errors.assignedTo
+                                ? 'bg-red-50 border border-red-500 text-red-900 focus:ring-red-500'
+                                : 'border border-gray-300 text-gray-900 focus:ring-gray-400'
+                                }`}
+                            {...register('assignedTo', { required: 'Please select a user' })}
+                        >
+                            <option value="">Select user</option>
+                            {userList.map((user) => (
+                                <option key={user._id} value={user._id}>
+                                    {user.name} {user.email ? `(${user.email})` : ''}
+                                </option>
+                            ))}
+                        </select>
+                        {errors.assignedTo && (
+                            <p className="mt-2 text-md text-red-600">
+                                <span className="font-medium"> {errors.assignedTo.message}</span>
+                            </p>
+                        )}
+                    </div>
+                    {/* Actions */}
+                    <div className="pt-4 flex justify-end gap-3">
+                        <button
+                            type="button"
+                            onClick={() => onClose(false)}
+                            className="px-4 py-2 rounded-lg bg-gray-200 text-gray-700 hover:bg-gray-300 transition"
+                            disabled={isSubmitting}
+                        >
+                            Cancel
+                        </button>
+                        <button
+                            type="submit"
+                            className="px-4 py-2 rounded-lg bg-blue-600 text-white hover:bg-blue-700 transition"
+                            disabled={isSubmitting}
+                        >
+                            {isSubmitting ? 'Creating...' : 'Create'}
+                        </button>
+                    </div>
+                </form>
             </div>
         </div>
     );

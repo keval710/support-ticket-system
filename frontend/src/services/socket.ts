@@ -1,5 +1,5 @@
 import { io, Socket } from 'socket.io-client';
-import type { Ticket } from '../types';
+import type { FormValues, Ticket } from '../types';
 
 class SocketService {
     private socket: Socket | null = null;
@@ -80,7 +80,7 @@ class SocketService {
         this.socket?.emit('updateTicketStatus', { ticketId, newStatusId });
     }
 
-    emitTicketCreated(ticket: Ticket) {
+    emitTicketCreated(ticket: FormValues) {
         this.socket?.emit('ticketCreated', ticket);
     }
 

@@ -15,6 +15,7 @@ router
 router
     .route('/:id')
     .get(auth(), ticketController.getTicket)
+    .patch(auth(), validate(ticketValidation.updateTicketSchema), ticketController.updateTicket)
 
 router
     .route('/assign/:id')

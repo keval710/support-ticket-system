@@ -25,9 +25,15 @@ const assignTicket = catchAsync(async (req, res) => {
     res.status(httpStatus.OK).json(ticket);
 });
 
+const updateTicket = catchAsync(async (req, res) => {
+    const ticket = await ticketService.updateTicket(req.params.id, req.body);
+    res.status(httpStatus.OK).json(ticket);
+})
+
 export default {
     createTicket,
     getAllTickets,
     getTicket,
-    assignTicket
+    assignTicket,
+    updateTicket
 };

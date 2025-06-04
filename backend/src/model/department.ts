@@ -9,9 +9,9 @@ const DepartmentSchema = new Schema<DepartmentDocument>({
     description: {
         type: String
     },
-    emails: [{
+    email: {
         type: String
-    }],
+    },
     assignedAdmins: [{
         type: mongoose.Types.ObjectId,
         ref: 'User'

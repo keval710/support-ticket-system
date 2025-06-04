@@ -4,8 +4,7 @@ import { Ticket } from '../model/ticket';
 import { Department } from '../model/department';
 import { FilterQuery } from 'mongoose';
 import { User } from '../model/user';
-import { Request, Response } from 'express';
-import { Server } from 'socket.io';
+import { Status } from '../model/status';
 
 // Create Ticket
 const createTicket = async (ticketData: any) => {
@@ -23,16 +22,10 @@ const createTicket = async (ticketData: any) => {
     }
     const ticket = new Ticket({
         ...ticketData,
-        department: ticketData.departmentId
+        ...(ticketData.departmentId && { department: ticketData.departmentId })
     });
     await ticket.save();
-    return {
-        message: 'Ticket created successfully',
-        ticket: {
-            id: ticket._id,
-            name: ticket.title
-        }
-    };
+    return ticket
 };
 
 // Get All Tickets
@@ -71,6 +64,7 @@ const getAllTickets = async (queryData: any) => {
     };
 };
 
+// Get Ticket by ID
 const getTicket = async (id: string) => {
     const ticket = await Ticket.findById(id).populate('department status assignedTo');
     if (!ticket) {
@@ -105,10 +99,36 @@ const updateTicketStatusById = async (ticketId: string, statusId: string) => {
     return ticket;
 };
 
+// Update ticket
+const updateTicket = async (id: string, data: any) => {
+    if (data.assignedTo) {
+        const user = await User.findById(data.assignedTo);
+        if (!user) {
+            throw new ApiError(httpStatus.NOT_FOUND, 'User not found');
+        }
+    }
+    if (data.status) {
+        const status = await Status.findById(data.status);
+        if (!status) {
+            throw new ApiError(httpStatus.NOT_FOUND, 'Status not found');
+        }
+    }
+    const ticket = await Ticket.findByIdAndUpdate(id, {
+        status: data.status,
+        priority: data.priority,
+        assignedTo: data.assignedTo
+    }, { new: true });
+    if (!ticket) {
+        throw new ApiError(httpStatus.NOT_FOUND, 'Ticket not found');
+    }
+    return ticket;
+}
+
 export default {
     createTicket,
     getAllTickets,
     getTicket,
     assignTicket,
-    updateTicketStatusById
+    updateTicketStatusById,
+    updateTicket
 };
