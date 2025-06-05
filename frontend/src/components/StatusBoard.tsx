@@ -1,12 +1,13 @@
 import { useEffect, useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
-import api from '../services/api';
-import { socketService } from '../services/socket';
 import StatusModal from './StatusModal';
 import TicketDetailModal from './TicketDetailModal';
 import UserBoard from './UserBoard';
 import type { Department, Status, Ticket, User } from '../types';
 import DepartmentModel from './DepartmentModel';
+import UnassignedTickets from './UnassignedTickets';
+import authApiInterceptor from '../services/axiosInstance/axios.instance';
+import { socketService } from '../services/socket/socket';
 
 const StatusBoard = () => {
     const [searchParams, setSearchParams] = useSearchParams();
@@ -19,18 +20,31 @@ const StatusBoard = () => {
     const [selectedUserId, setSelectedUserId] = useState<string | null>(searchParams.get('userId'));
     const [isLoading, setIsLoading] = useState(false);
     const [userTickets, setUserTickets] = useState<Record<string, Ticket[]>>({});
+    const [unassignedTickets, setUnassignedTickets] = useState<Ticket[]>([]);
+
+    // Fetch unassigned tickets
+    const fetchUnassignedTickets = async () => {
+        try {
+            const res = await authApiInterceptor.get('/api/ticket');
+            // Filter tickets that don't have assignedTo value
+            const unassigned = (res.data.results || []).filter((ticket: Ticket) => !ticket.assignedTo);
+            setUnassignedTickets(unassigned);
+        } catch (error) {
+            console.error('Failed to fetch unassigned tickets', error);
+        }
+    };
 
     // Fetch all users with their tickets
     const fetchUsers = async () => {
         setIsLoading(true);
         try {
-            const res = await api.get('/api/user');
+            const res = await authApiInterceptor.get('/api/user');
             setUsers(res.data);
-
             // Initialize userTickets map
             const ticketsMap: Record<string, Ticket[]> = {};
             res.data.forEach((user: User) => {
-                ticketsMap[user._id] = user.tickets || [];
+                // Only include tickets that have assignedTo value
+                ticketsMap[user._id] = (user.tickets || []).filter((ticket: Ticket) => ticket.assignedTo);
             });
             setUserTickets(ticketsMap);
         } catch (error) {
@@ -44,15 +58,13 @@ const StatusBoard = () => {
     const fetchUserWithTickets = async (userId: string) => {
         setIsLoading(true);
         try {
-            const res = await api.get(`/api/user/${userId}`);
+            const res = await authApiInterceptor.get(`/api/user/${userId}`);
             const userData = res.data;
-
             // Update userTickets for this user
             setUserTickets(prev => ({
                 ...prev,
                 [userId]: userData.tickets || [],
             }));
-
             // Add user to users list if not present
             setUsers(prevUsers => {
                 const exists = prevUsers.some(u => u._id === userData._id);
@@ -67,7 +79,7 @@ const StatusBoard = () => {
 
     const fetchStatuses = async () => {
         try {
-            const res = await api.get('/api/status');
+            const res = await authApiInterceptor.get('/api/status');
             setStatuses(res.data);
         } catch (error) {
             console.error('Failed to fetch statuses', error);
@@ -76,7 +88,7 @@ const StatusBoard = () => {
 
     const fetchDepartments = async () => {
         try {
-            const res = await api.get('/api/department');
+            const res = await authApiInterceptor.get('/api/department');
             setDepartments(res.data);
         } catch (error) {
             console.error('Failed to fetch departments', error);
@@ -86,7 +98,6 @@ const StatusBoard = () => {
     useEffect(() => {
         // Initialize socket connection and event listeners
         socketService.connect();
-
         socketService.onTicketStatusUpdated(({ ticketId, ticket }) => {
             setUserTickets(prev => {
                 const newUserTickets = { ...prev };
@@ -103,26 +114,42 @@ const StatusBoard = () => {
                 return newUserTickets;
             });
         });
-
         socketService.onNewTicket((ticket) => {
             if (ticket.assignedTo) {
                 setUserTickets(prev => ({
                     ...prev,
                     [ticket.assignedTo as string]: [...(prev[ticket.assignedTo as string] || []), ticket],
                 }));
+            } else {
+                // If ticket is unassigned, add it to unassigned tickets
+                setUnassignedTickets(prev => [...prev, ticket]);
             }
         });
-
+        // Add listener for ticket updates
+        socketService.onTicketUpdated((ticket) => {
+            if (ticket.assignedTo) {
+                // If ticket is now assigned, remove it from unassigned and add to user's tickets
+                setUnassignedTickets(prev => prev.filter(t => t._id !== ticket._id));
+                setUserTickets(prev => ({
+                    ...prev,
+                    [ticket.assignedTo as string]: [...(prev[ticket.assignedTo as string] || []), ticket],
+                }));
+            } else {
+                // If ticket is now unassigned, add it to unassigned tickets
+                setUnassignedTickets(prev => [...prev, ticket]);
+            }
+        });
         return () => {
             socketService.offTicketStatusUpdated();
             socketService.offNewTicket();
+            socketService.offTicketUpdated();
         };
     }, []);
 
     useEffect(() => {
         fetchStatuses();
         fetchDepartments();
-
+        fetchUnassignedTickets();
         if (selectedUserId) {
             fetchUserWithTickets(selectedUserId);
             socketService.joinUserRoom(selectedUserId);
@@ -130,7 +157,6 @@ const StatusBoard = () => {
             // If no user selected, fetch all users
             fetchUsers();
         }
-
         return () => {
             if (selectedUserId) {
                 socketService.leaveUserRoom(selectedUserId);
@@ -170,7 +196,7 @@ const StatusBoard = () => {
     };
 
     return (
-        <div className="p-4">
+        <div className="p-4 h-screen flex flex-col">
             <div className="flex justify-between items-center mb-6">
                 {/* User Filter */}
                 <div className="flex items-center gap-4">
@@ -244,38 +270,57 @@ const StatusBoard = () => {
                     </button>
                 </div>
             </div>
-            <div className="space-y-8">
-                {selectedUserId ? (
-                    users
-                        .filter(user => user._id === selectedUserId)
-                        .map(user => (
-                            <UserBoard
-                                key={user._id}
-                                user={user}
-                                userList={users}
-                                userTickets={userTickets[user._id] || []}
-                                statuses={statuses}
-                                departments={departments}
-                                onTicketClick={handleTicketClick}
-                                onTicketDrop={handleTicketDrop}
-                                onTicketCreated={fetchUserWithTickets}
-                            />
-                        ))
-                ) : (
-                    users.map(user => (
-                        <UserBoard
-                            key={user._id}
-                            user={user}
-                            userList={users}
-                            userTickets={userTickets[user._id] || []}
-                            statuses={statuses}
-                            departments={departments}
-                            onTicketClick={handleTicketClick}
-                            onTicketDrop={handleTicketDrop}
-                            onTicketCreated={fetchUserWithTickets}
-                        />
-                    ))
-                )}
+            <div className="flex-1 grid grid-cols-1 lg:grid-cols-5 gap-4 min-h-0">
+                {/* Left Column: Unassigned Tickets */}
+                <div className="lg:col-span-1 overflow-hidden">
+                    <UnassignedTickets
+                        tickets={unassignedTickets}
+                        departments={departments}
+                        userList={users}
+                        onTicketClick={handleTicketClick}
+                        onTicketDrop={handleTicketDrop}
+                        onTicketCreated={fetchUsers}
+                    />
+                </div>
+
+                {/* Right Column: User Boards */}
+                <div className="lg:col-span-4 overflow-y-auto pr-4 h-5/6">
+                    <div className="space-y-4">
+                        {selectedUserId ? (
+                            users
+                                .filter(user => user._id === selectedUserId)
+                                .map(user => (
+                                    <UserBoard
+                                        key={user._id}
+                                        user={user}
+                                        userList={users}
+                                        userTickets={userTickets[user._id] || []}
+                                        statuses={statuses}
+                                        departments={departments}
+                                        onTicketClick={handleTicketClick}
+                                        onTicketDrop={handleTicketDrop}
+                                        onTicketCreated={fetchUserWithTickets}
+                                        fetchStatuses={fetchStatuses}
+                                    />
+                                ))
+                        ) : (
+                            users.map(user => (
+                                <UserBoard
+                                    key={user._id}
+                                    user={user}
+                                    userList={users}
+                                    userTickets={userTickets[user._id] || []}
+                                    statuses={statuses}
+                                    departments={departments}
+                                    onTicketClick={handleTicketClick}
+                                    onTicketDrop={handleTicketDrop}
+                                    onTicketCreated={fetchUserWithTickets}
+                                    fetchStatuses={fetchStatuses}
+                                />
+                            ))
+                        )}
+                    </div>
+                </div>
             </div>
 
             {showStatusModal &&
@@ -293,6 +338,7 @@ const StatusBoard = () => {
                     ticketId={selectedTicketId}
                     onClose={(updated) => {
                         setSelectedTicketId(null);
+                        fetchUsers();
                         if (updated && selectedUserId) {
                             fetchUserWithTickets(selectedUserId);
                         }

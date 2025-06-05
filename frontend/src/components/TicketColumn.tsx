@@ -1,5 +1,5 @@
 import { useDrop } from "react-dnd";
-import { useState } from "react";
+import { useState, useRef } from "react";
 import TicketCard from "./TicketCard";
 import TicketCreateModal from "./TicketCreateModal";
 import type { TicketColumnProps } from "../types";
@@ -9,7 +9,6 @@ const TicketColumn = ({
     tickets,
     statusId,
     color,
-    userId,
     userList,
     onDropTicket,
     onTicketClick,
@@ -18,6 +17,7 @@ const TicketColumn = ({
 }: TicketColumnProps) => {
     const [showCreateModal, setShowCreateModal] = useState(false);
     const [isDropping, setIsDropping] = useState(false);
+    const columnRef = useRef<HTMLDivElement>(null);
 
     const [{ isOver }, drop] = useDrop(() => ({
         accept: "TICKET",
@@ -36,8 +36,19 @@ const TicketColumn = ({
         }),
     }));
 
-    return drop(
-        <div className={` relative rounded-2xl shadow-xl min-h-[580px] min-w-[300px] max-w-[300px] flex-shrink-0 transition-all duration-300 border border-gray-200 overflow-hidden ${isDropping ? "drop-shadow-lg scale-[0.98]" : ""} ${isOver ? "ring-4 ring-blue-500 opacity-80" : ""}`} style={{ backgroundColor: color }}>
+    // Apply the drop ref
+    drop(columnRef);
+
+    return (
+        <div
+            ref={columnRef}
+            className={`relative rounded-2xl shadow-xl min-h-[580px] min-w-[300px] max-w-[300px] flex-shrink-0 transition-all duration-300 border border-gray-200 overflow-hidden 
+                ${isDropping ? "drop-shadow-lg scale-[0.98]" : ""} 
+                ${isOver ? "ring-4 ring-blue-500 opacity-80" : ""}`}
+            style={{ 
+                backgroundColor: color,
+            }}
+        >
             {/* Overlay effect for all drop targets except hovered */}
             {isDropping && !isOver && (
                 <div className="absolute inset-0 bg-black/30 backdrop-blur-sm animate-fade-in z-20 pointer-events-none" />
@@ -66,7 +77,6 @@ const TicketColumn = ({
             {showCreateModal && (
                 <TicketCreateModal
                     statusId={statusId}
-                    assignedTo={userId}
                     userList={userList}
                     departments={departments}
                     onClose={(created) => {

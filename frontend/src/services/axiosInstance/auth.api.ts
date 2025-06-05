@@ -1,9 +1,9 @@
 import axios from "axios";
+import envVar from "../../config/config";
 
 const AuthService = axios.create({
-    baseURL: import.meta.env.VITE_BASE_URL,
+    baseURL: envVar.BASE_URL,
 });
-
 
 // Response interceptor
 AuthService.interceptors.response.use(

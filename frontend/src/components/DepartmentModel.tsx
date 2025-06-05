@@ -1,6 +1,6 @@
 import { useState, useEffect, type FormEvent } from 'react';
-import api from '../services/api';
 import type { DepartmentModalProps } from '../types';
+import authApiInterceptor from '../services/axiosInstance/axios.instance';
 
 const DepartmentModal = ({ onClose, onCreated }: DepartmentModalProps) => {
     const [name, setName] = useState('');
@@ -25,7 +25,7 @@ const DepartmentModal = ({ onClose, onCreated }: DepartmentModalProps) => {
         }
         setLoading(true);
         try {
-            await api.post('/api/department', {
+            await authApiInterceptor.post('/api/department', {
                 name,
                 description: description.trim() || undefined, // send only if not empty
             });

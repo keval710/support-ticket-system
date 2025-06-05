@@ -41,6 +41,7 @@ export interface UserBoardProps {
     onTicketClick: (ticketId: string) => void;
     onTicketDrop: (ticketId: string, newStatusId: string) => Promise<void>;
     onTicketCreated: (userId: string) => void;
+    fetchStatuses: () => void
 }
 
 export interface TicketColumnProps {
@@ -48,7 +49,6 @@ export interface TicketColumnProps {
     tickets: Ticket[];
     statusId?: string;
     color?: string;
-    userId: string;
     userList: User[];
     departments: Department[];
     onDropTicket?: (ticketId: string, newStatusId: string) => Promise<void>;

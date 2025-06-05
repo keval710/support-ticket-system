@@ -2,8 +2,7 @@ import { useGoogleLogin } from '@react-oauth/google';
 import { useAuth } from '../context/AuthContext';
 import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
-
-const USER_INFO_URL = import.meta.env.VITE_GOOGLE_USER_INFO_URL;
+import envVar from '../config/config';
 
 const Login = () => {
   const { login } = useAuth();
@@ -12,7 +11,7 @@ const Login = () => {
   const googleLogin = useGoogleLogin({
     onSuccess: async (tokenResponse) => {
       try {
-        const res = await axios.get(USER_INFO_URL, {
+        const res = await axios.get(envVar.GOOGLE_USER_INFO, {
           headers: {
             Authorization: `Bearer ${tokenResponse.access_token}`,
           },

@@ -1,7 +1,7 @@
 import { useForm } from 'react-hook-form';
-import { socketService } from '../services/socket';
 import type { FormValues, TicketCreateModalProps } from '../types';
 import { useEffect } from 'react';
+import { socketService } from '../services/socket/socket';
 
 const TicketCreateModal = ({ statusId, assignedTo, departments, onClose, userList = [] }: TicketCreateModalProps) => {
     const {
@@ -112,10 +112,7 @@ const TicketCreateModal = ({ statusId, assignedTo, departments, onClose, userLis
                             Department <span className="text-gray-400 text-sm">(optional)</span>
                         </label>
                         <select
-                            className={`w-full text-md rounded-lg block p-2.5 mt-1 bg-white focus:outline-none focus:ring-1 ${errors.assignedTo
-                                ? 'bg-red-50 border border-red-500 text-red-900 focus:ring-red-500'
-                                : 'border border-gray-300 text-gray-900 focus:ring-gray-400'
-                                }`}
+                            className="w-full text-md rounded-lg block p-2.5 mt-1 bg-white border border-gray-300 text-gray-900 focus:outline-none focus:ring-1 focus:ring-gray-400"
                             {...register('departmentId')}
                         >
                             <option value="">Select department</option>
@@ -128,15 +125,12 @@ const TicketCreateModal = ({ statusId, assignedTo, departments, onClose, userLis
                     </div>
                     {/* Assign To */}
                     <div>
-                        <label className={`block mb-2 text-md font-medium ${errors.assignedTo ? 'text-red-700' : 'text-gray-700'}`}>
-                            Assign to
+                        <label className={`block mb-2 text-md font-medium text-gray-700`}>
+                            Assign to <span className="text-gray-400 text-sm">(optional)</span>
                         </label>
                         <select
-                            className={`w-full text-md rounded-lg block p-2.5 mt-1 bg-white focus:outline-none focus:ring-1 ${errors.assignedTo
-                                ? 'bg-red-50 border border-red-500 text-red-900 focus:ring-red-500'
-                                : 'border border-gray-300 text-gray-900 focus:ring-gray-400'
-                                }`}
-                            {...register('assignedTo', { required: 'Please select a user' })}
+                            className="w-full text-md rounded-lg block p-2.5 mt-1 bg-white border border-gray-300 text-gray-900 focus:outline-none focus:ring-1 focus:ring-gray-400"
+                            {...register('assignedTo')}
                         >
                             <option value="">Select user</option>
                             {userList.map((user) => (
@@ -145,11 +139,6 @@ const TicketCreateModal = ({ statusId, assignedTo, departments, onClose, userLis
                                 </option>
                             ))}
                         </select>
-                        {errors.assignedTo && (
-                            <p className="mt-2 text-md text-red-600">
-                                <span className="font-medium"> {errors.assignedTo.message}</span>
-                            </p>
-                        )}
                     </div>
                     {/* Actions */}
                     <div className="pt-4 flex justify-end gap-3">

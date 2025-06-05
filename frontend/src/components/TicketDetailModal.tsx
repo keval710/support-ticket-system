@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
-import api from '../services/api';
 import type { Status, TicketDetail, TicketDetailModalProps, User } from '../types';
+import authApiInterceptor from '../services/axiosInstance/axios.instance';
 
 const TicketDetailModal = ({ ticketId, onClose }: TicketDetailModalProps) => {
   const [ticket, setTicket] = useState<TicketDetail | null>(null);
@@ -11,14 +11,19 @@ const TicketDetailModal = ({ ticketId, onClose }: TicketDetailModalProps) => {
   const [selectedAssignee, setSelectedAssignee] = useState<string>();
   const [isUpdating, setIsUpdating] = useState(false);
   const [wasUpdated, setWasUpdated] = useState(false);
+  const [errors, setErrors] = useState({
+    status: '',
+    priority: '',
+    assignee: ''
+  });
 
   const fetchDetails = async () => {
     try {
-      const res = await api.get(`/api/ticket/${ticketId}`);
+      const res = await authApiInterceptor.get(`/api/ticket/${ticketId}`);
       setTicket(res.data);
-      setSelectedStatus(res.data.status._id);
+      setSelectedStatus(res.data.status?._id);
       setSelectedPriority(res.data.priority);
-      setSelectedAssignee(res.data.assignedTo._id);
+      setSelectedAssignee(res.data.assignedTo?._id);
     } catch (err) {
       console.error('Failed to fetch ticket detail', err);
     }
@@ -26,7 +31,7 @@ const TicketDetailModal = ({ ticketId, onClose }: TicketDetailModalProps) => {
 
   const fetchStatuses = async () => {
     try {
-      const res = await api.get('/api/status');
+      const res = await authApiInterceptor.get('/api/status');
       setStatuses(res.data);
     } catch (err) {
       console.error('Failed to fetch statuses', err);
@@ -35,7 +40,7 @@ const TicketDetailModal = ({ ticketId, onClose }: TicketDetailModalProps) => {
 
   const fetchUsers = async () => {
     try {
-      const res = await api.get('/api/user');
+      const res = await authApiInterceptor.get('/api/user');
       setUsers(res.data);
     } catch (err) {
       console.error('Failed to fetch users', err);
@@ -55,21 +60,45 @@ const TicketDetailModal = ({ ticketId, onClose }: TicketDetailModalProps) => {
     };
   }, []);
 
+  const validateForm = () => {
+    const newErrors = {
+      status: '',
+      priority: '',
+      assignee: ''
+    };
+
+    if (!selectedStatus) {
+      newErrors.status = 'Status is required';
+    }
+    if (!selectedPriority) {
+      newErrors.priority = 'Priority is required';
+    }
+    if (!selectedAssignee) {
+      newErrors.assignee = 'Assignee is required';
+    }
+
+    setErrors(newErrors);
+    return !newErrors.status && !newErrors.priority && !newErrors.assignee;
+  };
+
   const handleUpdate = async () => {
     if (!ticket) return;
+    if (!validateForm()) {
+      return;
+    }
     setIsUpdating(true);
     try {
-      await api.patch(`/api/ticket/${ticket._id}`, {
+      await authApiInterceptor.patch(`/api/ticket/${ticket._id}`, {
         status: selectedStatus,
         priority: selectedPriority,
         assignedTo: selectedAssignee,
       });
       setWasUpdated(true);
+      onClose(true);
     } catch (err) {
       console.error('Failed to update ticket', err);
     } finally {
       setIsUpdating(false);
-      onClose(wasUpdated);
     }
   };
 
@@ -132,45 +161,80 @@ const TicketDetailModal = ({ ticketId, onClose }: TicketDetailModalProps) => {
           <div className="space-y-5 text-sm">
             {/* Status */}
             <div>
-              <label className="block text-gray-600 font-medium mb-1">Status</label>
+              <label className={`block font-medium mb-1 ${errors.status ? 'text-red-600' : 'text-gray-600'}`}>
+                Status {!ticket.assignedTo && <span className="text-red-500">*</span>}
+              </label>
               <select
-                className="w-full border border-gray-300 rounded p-2"
+                className={`w-full border rounded p-2 ${errors.status
+                    ? 'border-red-500 bg-red-50 focus:ring-red-500 focus:border-red-500'
+                    : 'border-gray-300 focus:ring-blue-500 focus:border-blue-500'
+                  }`}
                 value={selectedStatus}
-                onChange={(e) => setSelectedStatus(e.target.value)}
+                onChange={(e) => {
+                  setSelectedStatus(e.target.value);
+                  setErrors(prev => ({ ...prev, status: '' }));
+                }}
               >
+                <option value="">Select status</option>
                 {statuses.map(s => (
                   <option key={s._id} value={s._id}>{s.title}</option>
                 ))}
               </select>
+              {errors.status && (
+                <p className="mt-1 text-sm text-red-600">{errors.status}</p>
+              )}
             </div>
 
             {/* Priority */}
             <div>
-              <label className="block text-gray-600 font-medium mb-1">Priority</label>
+              <label className={`block font-medium mb-1 ${errors.priority ? 'text-red-600' : 'text-gray-600'}`}>
+                Priority {!ticket.assignedTo && <span className="text-red-500">*</span>}
+              </label>
               <select
-                className="w-full border border-gray-300 rounded p-2"
+                className={`w-full border rounded p-2 ${errors.priority
+                    ? 'border-red-500 bg-red-50 focus:ring-red-500 focus:border-red-500'
+                    : 'border-gray-300 focus:ring-blue-500 focus:border-blue-500'
+                  }`}
                 value={selectedPriority}
-                onChange={(e) => setSelectedPriority(e.target.value)}
+                onChange={(e) => {
+                  setSelectedPriority(e.target.value);
+                  setErrors(prev => ({ ...prev, priority: '' }));
+                }}
               >
+                <option value="">Select priority</option>
                 <option value="low">Low</option>
                 <option value="medium">Medium</option>
                 <option value="high">High</option>
               </select>
+              {errors.priority && (
+                <p className="mt-1 text-sm text-red-600">{errors.priority}</p>
+              )}
             </div>
 
             {/* Assignee */}
             <div>
-              <label className="block text-gray-600 font-medium mb-1">Change Assignee</label>
+              <label className={`block font-medium mb-1 ${errors.assignee ? 'text-red-600' : 'text-gray-600'}`}>
+                Change Assignee {!ticket.assignedTo && <span className="text-red-500">*</span>}
+              </label>
               <select
-                className="w-full border border-gray-300 rounded p-2"
+                className={`w-full border rounded p-2 ${errors.assignee
+                    ? 'border-red-500 bg-red-50 focus:ring-red-500 focus:border-red-500'
+                    : 'border-gray-300 focus:ring-blue-500 focus:border-blue-500'
+                  }`}
                 value={selectedAssignee}
-                onChange={(e) => setSelectedAssignee(e.target.value)}
+                onChange={(e) => {
+                  setSelectedAssignee(e.target.value);
+                  setErrors(prev => ({ ...prev, assignee: '' }));
+                }}
               >
-                <option value="">Unassigned</option>
+                <option value="">Select assignee</option>
                 {users.map(u => (
                   <option key={u._id} value={u._id}>{u.name}</option>
                 ))}
               </select>
+              {errors.assignee && (
+                <p className="mt-1 text-sm text-red-600">{errors.assignee}</p>
+              )}
             </div>
 
             {/* Action Buttons */}
@@ -182,7 +246,7 @@ const TicketDetailModal = ({ ticketId, onClose }: TicketDetailModalProps) => {
                 Close
               </button>
               <button
-                className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg"
+                className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg disabled:opacity-50 disabled:cursor-not-allowed"
                 onClick={handleUpdate}
                 disabled={isUpdating}
               >
@@ -193,7 +257,6 @@ const TicketDetailModal = ({ ticketId, onClose }: TicketDetailModalProps) => {
         </div>
       </div>
     </div>
-
   );
 };
 

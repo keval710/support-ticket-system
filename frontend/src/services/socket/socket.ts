@@ -1,5 +1,6 @@
 import { io, Socket } from 'socket.io-client';
-import type { FormValues, Ticket } from '../types';
+import type { FormValues, Ticket } from '../../types';
+import envVar from '../../config/config';
 
 class SocketService {
     private socket: Socket | null = null;
@@ -8,7 +9,7 @@ class SocketService {
     private maxRetries = 5;
     private retryDelay = 3000; // 3 seconds
 
-    private constructor() {}
+    private constructor() { }
 
     static getInstance(): SocketService {
         if (!SocketService.instance) {
@@ -19,7 +20,7 @@ class SocketService {
 
     connect() {
         if (!this.socket) {
-            this.socket = io(import.meta.env.VITE_BASE_URL, {
+            this.socket = io(envVar.BASE_URL, {
                 withCredentials: true,
                 transports: ['websocket', 'polling'],
                 reconnection: true,
@@ -92,12 +93,20 @@ class SocketService {
         this.socket?.on('newTicket', callback);
     }
 
+    onTicketUpdated(callback: (ticket: Ticket) => void) {
+        this.socket?.on('ticketUpdated', callback);
+    }
+
     offTicketStatusUpdated() {
         this.socket?.off('ticketStatusUpdated');
     }
 
     offNewTicket() {
         this.socket?.off('newTicket');
+    }
+
+    offTicketUpdated() {
+        this.socket?.off('ticketUpdated');
     }
 }
 

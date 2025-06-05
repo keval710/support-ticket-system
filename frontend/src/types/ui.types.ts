@@ -63,11 +63,42 @@ export interface FormValues {
     title: string;
     description: string;
     assignedTo: string;
-    priority: '' |'low' | 'medium' | 'high' | 'urgent';
+    priority: '' | 'low' | 'medium' | 'high' | 'urgent';
     departmentId?: string
 }
 
 export interface Department {
     _id: string;
     name: string;
+}
+
+export interface TicketColumnProps {
+    title: string;
+    tickets: Ticket[];
+    statusId: string;
+    color: string;
+    departments: Department[];
+    onDropTicket: (ticketId: string, newStatusId: string) => Promise<void>;
+    onTicketClick: (ticketId: string) => void;
+    onTicketCreated: () => void;
+    userList: User[];
+    index: number;
+}
+
+export interface GoogleUser {
+    email: string;
+    email_verified: boolean;
+    family_name: string;
+    given_name: string;
+    hd: string;
+    name: string;
+    picture: string;
+    sub: string; // This is usually the Google user ID
+}
+
+export interface AuthContextType {
+    user: GoogleUser | null;
+    loading: boolean;
+    login: (userData: GoogleUser) => void;
+    logout: () => void;
 }

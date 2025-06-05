@@ -1,6 +1,6 @@
 import { useState, useEffect, type FormEvent } from 'react';
-import api from '../services/api';
 import type { StatusModalProps } from '../types';
+import authApiInterceptor from '../services/axiosInstance/axios.instance';
 
 const StatusModal = ({ onClose, onCreated }: StatusModalProps) => {
   const [title, setTitle] = useState('');
@@ -28,7 +28,7 @@ const StatusModal = ({ onClose, onCreated }: StatusModalProps) => {
 
     setLoading(true);
     try {
-      await api.post('/api/status', { title, color });
+      await authApiInterceptor.post('/api/status', { title, color });
       onCreated();
     } catch (err) {
       console.error('Error creating status', err);
