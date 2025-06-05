@@ -6,8 +6,9 @@ import UserBoard from './UserBoard';
 import type { Department, Status, Ticket, User } from '../types';
 import DepartmentModel from './DepartmentModel';
 import UnassignedTickets from './UnassignedTickets';
-import authApiInterceptor from '../services/axiosInstance/axios.instance';
+import authApiInterceptor from '../services/axiosInstance/auth.instance';
 import { socketService } from '../services/socket/socket';
+import { toast } from 'react-hot-toast';
 
 const StatusBoard = () => {
     const [searchParams, setSearchParams] = useSearchParams();
@@ -31,6 +32,7 @@ const StatusBoard = () => {
             setUnassignedTickets(unassigned);
         } catch (error) {
             console.error('Failed to fetch unassigned tickets', error);
+            toast.error('Failed to fetch unassigned tickets');
         }
     };
 
@@ -49,6 +51,7 @@ const StatusBoard = () => {
             setUserTickets(ticketsMap);
         } catch (error) {
             console.error('Failed to fetch users', error);
+            toast.error('Failed to fetch users');
         } finally {
             setIsLoading(false);
         }
@@ -72,6 +75,7 @@ const StatusBoard = () => {
             });
         } catch (error) {
             console.error('Failed to fetch user tickets', error);
+            toast.error('Failed to fetch user tickets');
         } finally {
             setIsLoading(false);
         }
@@ -83,6 +87,7 @@ const StatusBoard = () => {
             setStatuses(res.data);
         } catch (error) {
             console.error('Failed to fetch statuses', error);
+            toast.error('Failed to fetch statuses');
         }
     };
 
@@ -92,6 +97,7 @@ const StatusBoard = () => {
             setDepartments(res.data);
         } catch (error) {
             console.error('Failed to fetch departments', error);
+            toast.error('Failed to fetch departments');
         }
     };
 
@@ -114,31 +120,43 @@ const StatusBoard = () => {
                 return newUserTickets;
             });
         });
-        socketService.onNewTicket((ticket) => {
-            if (ticket.assignedTo) {
+        socketService.onTicketUpdated((ticket) => {
+            const assignedUserId =
+                typeof ticket.assignedTo === 'string'
+                    ? ticket.assignedTo
+                    : ticket.assignedTo?._id;
+            if (assignedUserId) {
+                // Ticket assigned to a user
+                setUnassignedTickets(prev => prev.filter(t => t._id !== ticket._id));
                 setUserTickets(prev => ({
                     ...prev,
-                    [ticket.assignedTo as string]: [...(prev[ticket.assignedTo as string] || []), ticket],
+                    [assignedUserId]: [...(prev[assignedUserId] || []), ticket],
                 }));
             } else {
-                // If ticket is unassigned, add it to unassigned tickets
+                // Ticket is unassigned
                 setUnassignedTickets(prev => [...prev, ticket]);
             }
         });
         // Add listener for ticket updates
         socketService.onTicketUpdated((ticket) => {
-            if (ticket.assignedTo) {
+            const assignedUserId =
+                typeof ticket.assignedTo === 'string'
+                    ? ticket.assignedTo
+                    : ticket.assignedTo?._id;
+
+            if (assignedUserId) {
                 // If ticket is now assigned, remove it from unassigned and add to user's tickets
                 setUnassignedTickets(prev => prev.filter(t => t._id !== ticket._id));
                 setUserTickets(prev => ({
                     ...prev,
-                    [ticket.assignedTo as string]: [...(prev[ticket.assignedTo as string] || []), ticket],
+                    [assignedUserId]: [...(prev[assignedUserId] || []), ticket],
                 }));
             } else {
                 // If ticket is now unassigned, add it to unassigned tickets
                 setUnassignedTickets(prev => [...prev, ticket]);
             }
         });
+
         return () => {
             socketService.offTicketStatusUpdated();
             socketService.offNewTicket();
@@ -179,11 +197,13 @@ const StatusBoard = () => {
 
     const handleStatusCreated = () => {
         setShowStatusModal(false);
+        toast.success('Status created successfully');
         fetchStatuses();
     };
 
     const handleDepartmentCreated = () => {
         setShowDepartmentModal(false);
+        toast.success('Department created successfully');
         fetchDepartments();
     };
 
@@ -196,28 +216,37 @@ const StatusBoard = () => {
     };
 
     return (
-        <div className="p-4 h-screen flex flex-col">
-            <div className="flex justify-between items-center mb-6">
-                {/* User Filter */}
+        <div className="h-screen flex flex-col overflow-hidden">
+            {/* Header Section */}
+            <div className="flex justify-between items-center p-4">
+                {/* Left: Search & Avatar Filter */}
                 <div className="flex items-center gap-4">
-                    <form className="min-w-xs mx-auto">
+                    {/* Search Box */}
+                    <form className="min-w-xs">
                         <div className="relative">
                             <div className="absolute inset-y-0 start-0 flex items-center ps-3 pointer-events-none">
-                                <svg className="w-4 h-4 text-gray-500" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 20 20">
-                                    <path stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="m19 19-4-4m0-7A7 7 0 1 1 1 8a7 7 0 0 1 14 0Z" />
+                                <svg className="w-4 h-4 text-gray-500" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 20 20">
+                                    <path stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth="2"
+                                        d="m19 19-4-4m0-7A7 7 0 1 1 1 8a7 7 0 0 1 14 0Z" />
                                 </svg>
                             </div>
-                            <input type="search" id="default-search" className="block w-full p-3 ps-10 text-sm text-gray-900 border border-gray-500 rounded-lg bg-gray-100" placeholder="Search..." required />
+                            <input
+                                type="search"
+                                id="default-search"
+                                placeholder="Search..."
+                                required
+                                className="block w-full p-3 ps-10 text-sm text-gray-900 border border-gray-500 rounded-lg bg-gray-100"
+                            />
                         </div>
                     </form>
-                    {/* User Avatar Scrollable List */}
+
+                    {/* Avatar List */}
                     <div className="flex items-center px-3 py-2 overflow-x-auto max-w-full scrollbar-hide">
-                        {/* All Users Option */}
+                        {/* All Users */}
                         <button
                             onClick={() => handleUserChange('')}
                             className={`flex items-center justify-center w-10 h-10 rounded-full border transition bg-white text-xs font-semibold ${!selectedUserId ? 'ring-2 ring-blue-500 border-blue-400 z-[60]' : 'border-gray-300 z-[10]'}`}
                             title="All Users"
-                            style={{ zIndex: !selectedUserId ? 30 : 10 }}
                         >
                             All
                         </button>
@@ -248,20 +277,17 @@ const StatusBoard = () => {
                             })}
                         </div>
 
-                        {isLoading && (
-                            <span className="ml-4 text-sm text-gray-500">Loading...</span>
-                        )}
+                        {isLoading && <span className="ml-4 text-sm text-gray-500">Loading...</span>}
                     </div>
                 </div>
+                {/* Right: Buttons */}
                 <div className='flex gap-2'>
-                    {/* Create Status Button */}
                     <button
                         onClick={handleStatusCreate}
                         className="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-lg"
                     >
                         Create Status
                     </button>
-                    {/* Create Department Button */}
                     <button
                         onClick={handleDepartmentCreate}
                         className="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-lg"
@@ -270,41 +296,24 @@ const StatusBoard = () => {
                     </button>
                 </div>
             </div>
-            <div className="flex-1 grid grid-cols-1 lg:grid-cols-5 gap-4 min-h-0">
-                {/* Left Column: Unassigned Tickets */}
-                <div className="lg:col-span-1 overflow-hidden">
-                    <UnassignedTickets
-                        tickets={unassignedTickets}
-                        departments={departments}
-                        userList={users}
-                        onTicketClick={handleTicketClick}
-                        onTicketDrop={handleTicketDrop}
-                        onTicketCreated={fetchUsers}
-                    />
-                </div>
-
-                {/* Right Column: User Boards */}
-                <div className="lg:col-span-4 overflow-y-auto pr-4 h-5/6">
-                    <div className="space-y-4">
-                        {selectedUserId ? (
-                            users
-                                .filter(user => user._id === selectedUserId)
-                                .map(user => (
-                                    <UserBoard
-                                        key={user._id}
-                                        user={user}
-                                        userList={users}
-                                        userTickets={userTickets[user._id] || []}
-                                        statuses={statuses}
-                                        departments={departments}
-                                        onTicketClick={handleTicketClick}
-                                        onTicketDrop={handleTicketDrop}
-                                        onTicketCreated={fetchUserWithTickets}
-                                        fetchStatuses={fetchStatuses}
-                                    />
-                                ))
-                        ) : (
-                            users.map(user => (
+            {/* Scrollable Ticket Area */}
+            <div className="flex-1 overflow-hidden px-4 pb-4">
+                <div className="grid grid-cols-1 lg:grid-cols-5 gap-4 h-full">
+                    {/* Unassigned Tickets Column */}
+                    <div className="lg:col-span-1 min-h-0 overflow-y-auto">
+                        <UnassignedTickets
+                            tickets={unassignedTickets}
+                            departments={departments}
+                            userList={users}
+                            onTicketClick={handleTicketClick}
+                            onTicketDrop={handleTicketDrop}
+                            onTicketCreated={fetchUnassignedTickets}
+                        />
+                    </div>
+                    {/* User Boards */}
+                    <div className="lg:col-span-4 min-h-0 h-[88%] overflow-y-auto pr-4">
+                        <div className="space-y-4">
+                            {(selectedUserId ? users.filter(user => user._id === selectedUserId) : users).map(user => (
                                 <UserBoard
                                     key={user._id}
                                     user={user}
@@ -317,33 +326,37 @@ const StatusBoard = () => {
                                     onTicketCreated={fetchUserWithTickets}
                                     fetchStatuses={fetchStatuses}
                                 />
-                            ))
-                        )}
+                            ))}
+                        </div>
                     </div>
                 </div>
             </div>
-
-            {showStatusModal &&
+            {/* Modals */}
+            {showStatusModal && (
                 <StatusModal
                     onClose={() => setShowStatusModal(false)}
                     onCreated={handleStatusCreated}
-                />}
-            {showDepartmentModal &&
+                />
+            )}
+            {showDepartmentModal && (
                 <DepartmentModel
                     onClose={() => setShowDepartmentModal(false)}
                     onCreated={handleDepartmentCreated}
-                />}
-            {selectedTicketId &&
+                />
+            )}
+            {selectedTicketId && (
                 <TicketDetailModal
                     ticketId={selectedTicketId}
                     onClose={(updated) => {
                         setSelectedTicketId(null);
                         fetchUsers();
+                        fetchUnassignedTickets();
                         if (updated && selectedUserId) {
                             fetchUserWithTickets(selectedUserId);
                         }
                     }}
-                />}
+                />
+            )}
         </div>
     );
 }

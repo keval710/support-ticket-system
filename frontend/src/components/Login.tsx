@@ -3,6 +3,7 @@ import { useAuth } from '../context/AuthContext';
 import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
 import envVar from '../config/config';
+import toast from 'react-hot-toast';
 
 const Login = () => {
   const { login } = useAuth();
@@ -18,19 +19,22 @@ const Login = () => {
         });
         login({ ...res.data, access_token: tokenResponse.access_token });
         navigate('/');
+        toast.success('Login successful');
       } catch (err) {
         console.error('Failed to fetch user info', err);
+        toast.error('Failed to fetch user info');
       }
     },
     onError: () => {
       console.error('Google login failed');
+      toast.error('Google login failed');
     },
   });
 
   return (
     <div className="flex items-center justify-center h-screen bg-gray-100">
       <div className="bg-white p-8 rounded-2xl shadow-lg max-w-sm w-full text-center">
-        <h2 className="text-2xl font-bold mb-4">Welcome Back</h2>
+        <h2 className="text-2xl font-bold mb-4">Welcome</h2>
         <p className="text-gray-500 mb-6">Login to continue</p>
         <button
           onClick={() => googleLogin()}

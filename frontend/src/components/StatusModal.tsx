@@ -1,6 +1,6 @@
 import { useState, useEffect, type FormEvent } from 'react';
-import type { StatusModalProps } from '../types';
-import authApiInterceptor from '../services/axiosInstance/axios.instance';
+import authApiInterceptor from '../services/axiosInstance/auth.instance';
+import type { StatusModalProps } from '../types/props.type';
 
 const StatusModal = ({ onClose, onCreated }: StatusModalProps) => {
   const [title, setTitle] = useState('');

@@ -1,6 +1,8 @@
 import React, { createContext, useContext, useState } from 'react';
-import AuthService from '../services/axiosInstance/auth.api';
 import type { AuthContextType, GoogleUser } from '../types';
+import loginApiInterceptor from '../services/axiosInstance/login.instance';
+import authApiInterceptor from '../services/axiosInstance/auth.instance';
+import { toast } from 'react-hot-toast';
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
@@ -14,7 +16,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const loginWithGoogle = async (userData: GoogleUser) => {
     try {
       setLoading(true);
-      const res = await AuthService.post('/api/auth/google', {
+      const res = await loginApiInterceptor.post('/api/auth/google', {
         email: userData.email,
         name: userData.name,
         picture: userData.picture,
@@ -28,15 +30,28 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       }));
       setUser(userData);
     } catch (error) {
-      console.log(error);
+      toast.error('Failed to login');
     } finally {
       setLoading(false);
     }
   };
 
-  const logout = () => {
-    localStorage.removeItem('user');
-    setUser(null);
+  const logout = async () => {
+    try {
+      setLoading(true);
+      const user = localStorage.getItem('user');
+      if (!user) return;
+      const userId = JSON.parse(user).userId;
+      await authApiInterceptor.post('/api/auth/logout', {
+        userId
+      });
+      localStorage.removeItem('user');
+      setUser(null);
+    } catch (error) {
+      toast.error('Failed to logout');
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (

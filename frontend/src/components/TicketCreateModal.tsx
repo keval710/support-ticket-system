@@ -1,7 +1,8 @@
 import { useForm } from 'react-hook-form';
-import type { FormValues, TicketCreateModalProps } from '../types';
+import type { FormValues, TicketCreateModalProps, TicketCreatePayload } from '../types';
 import { useEffect } from 'react';
 import { socketService } from '../services/socket/socket';
+import { toast } from 'react-hot-toast';
 
 const TicketCreateModal = ({ statusId, assignedTo, departments, onClose, userList = [] }: TicketCreateModalProps) => {
     const {
@@ -28,13 +29,26 @@ const TicketCreateModal = ({ statusId, assignedTo, departments, onClose, userLis
 
     const onSubmit = async (data: FormValues) => {
         try {
-            socketService.emitTicketCreated({
-                ...data,
-                ...(statusId && { status: statusId }),
-            });
+            const ticketPayload: TicketCreatePayload = {
+                title: data.title,
+                description: data.description,
+                priority: data.priority,
+            };
+            if (data.assignedTo && data.assignedTo !== "") {
+                ticketPayload.assignedTo = data.assignedTo;
+            }
+            if (data.departmentId && data.departmentId !== "") {
+                ticketPayload.departmentId = data.departmentId;
+            }
+            if (statusId) {
+                ticketPayload.status = statusId;
+            }
+            socketService.emitTicketCreated(ticketPayload);
+            toast.success('Ticket created successfully');
             onClose(true);
         } catch (error) {
             console.error('Failed to create ticket', error);
+            toast.error('Failed to create ticket');
         }
     };
 

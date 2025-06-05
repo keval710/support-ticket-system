@@ -1,6 +1,6 @@
 import Joi from 'joi';
 
-const createOrUpdateStatus = {
+const createStatus = {
     body: Joi.object({
         title: Joi.string().required(),
         color: Joi.string().required(),
@@ -10,5 +10,5 @@ const createOrUpdateStatus = {
 };
 
 export default {
-    createOrUpdateStatus,
+    createStatus,
 };

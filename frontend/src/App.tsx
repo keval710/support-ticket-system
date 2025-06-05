@@ -10,6 +10,7 @@ import { DndProvider } from 'react-dnd';
 import Login from './components/Login';
 import { AuthProvider, useAuth } from './context/AuthContext';
 import Dashboard from './components/Dashboard';
+import { Toaster } from 'react-hot-toast';
 
 interface RouteProps {
   children: ReactNode;
@@ -28,6 +29,10 @@ const PublicRoute = ({ children }: RouteProps) => {
 const App = () => {
   return (
     <AuthProvider>
+      <Toaster
+        position="top-center"
+        reverseOrder={false}
+      />
       <DndProvider backend={HTML5Backend}>
         <Router>
           <Routes>

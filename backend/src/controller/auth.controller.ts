@@ -7,6 +7,12 @@ const oAuthLogin = catchAsync(async (req, res) => {
     res.status(httpStatus.CREATED).json(user)
 });
 
+    const logout = catchAsync(async (req, res) => {
+    const user = await authService.logout(req.body.userId);
+    res.status(httpStatus.OK).json(user)
+})
+
 export default {
-    oAuthLogin
+    oAuthLogin,
+    logout
 };

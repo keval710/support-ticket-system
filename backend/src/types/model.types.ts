@@ -10,6 +10,7 @@ export interface IUser extends Document {
     providerId?: string;
     role?: Role;
     isEmailVerified?: boolean;
+    isLoggedIn: boolean;
     createdAt?: Date;
     updatedAt?: Date;
 }

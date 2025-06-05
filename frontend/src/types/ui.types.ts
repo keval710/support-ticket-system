@@ -27,8 +27,9 @@ export interface Ticket {
     title: string;
     description: string;
     status: Status;
+    department?:Department;
     priority: string;
-    assignedTo?: string;
+    assignedTo?: User;
     tags: string[];
     dependencies: string[];
     history: [];
@@ -75,14 +76,14 @@ export interface Department {
 export interface TicketColumnProps {
     title: string;
     tickets: Ticket[];
-    statusId: string;
+    statusId?: string;
     color: string;
+    userPicture?: string;
     departments: Department[];
     onDropTicket: (ticketId: string, newStatusId: string) => Promise<void>;
     onTicketClick: (ticketId: string) => void;
     onTicketCreated: () => void;
     userList: User[];
-    index: number;
 }
 
 export interface GoogleUser {
@@ -101,4 +102,13 @@ export interface AuthContextType {
     loading: boolean;
     login: (userData: GoogleUser) => void;
     logout: () => void;
+}
+
+export interface TicketCreatePayload {
+    title: string;
+    description: string;
+    assignedTo?: string;
+    priority: string;
+    departmentId?: string;
+    status?: string;
 }

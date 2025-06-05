@@ -10,6 +10,7 @@ const TicketColumn = ({
     statusId,
     color,
     userList,
+    userPicture,
     onDropTicket,
     onTicketClick,
     departments,
@@ -42,19 +43,15 @@ const TicketColumn = ({
     return (
         <div
             ref={columnRef}
-            className={`relative rounded-2xl shadow-xl min-h-[580px] min-w-[300px] max-w-[300px] flex-shrink-0 transition-all duration-300 border border-gray-200 overflow-hidden 
-                ${isDropping ? "drop-shadow-lg scale-[0.98]" : ""} 
-                ${isOver ? "ring-4 ring-blue-500 opacity-80" : ""}`}
-            style={{ 
-                backgroundColor: color,
-            }}
+            className={`relative flex flex-col rounded-2xl shadow-xl min-h-[550px] min-w-[300px] max-w-[300px] max-h-[570px] flex-shrink-0 transition-all duration-300 border border-gray-200 overflow-hidden ${isDropping ? "drop-shadow-lg scale-[0.98]" : ""} ${isOver ? "ring-4 ring-blue-500 opacity-80" : ""}`} style={{ backgroundColor: color }}
         >
-            {/* Overlay effect for all drop targets except hovered */}
+            {/* Overlay effect */}
             {isDropping && !isOver && (
                 <div className="absolute inset-0 bg-black/30 backdrop-blur-sm animate-fade-in z-20 pointer-events-none" />
             )}
-            <div className="relative z-30 p-4 h-full flex flex-col text-white">
-                {/* Header with bottom border */}
+            {/* Column content */}
+            <div className="relative z-30 flex flex-col text-white h-full p-4">
+                {/* Header */}
                 <div className="flex justify-between items-center mb-4 pb-4 border-b border-white/30">
                     <h3 className="font-semibold text-lg tracking-wide">{title}</h3>
                     <button
@@ -64,16 +61,16 @@ const TicketColumn = ({
                         + Add
                     </button>
                 </div>
-
-                {/* Ticket List */}
-                <div className="flex-1 overflow-y-auto space-y-3 pr-2 mt-3 custom-scrollbar">
+                {/* Scrollable ticket list */}
+                <div className="flex-1 overflow-y-auto scrollbar-hide pr-2 mt-3 space-y-3">
                     {tickets.map((ticket) => (
                         <div key={ticket._id} onClick={() => onTicketClick(ticket._id)} className="cursor-pointer">
-                            <TicketCard ticket={ticket} />
+                            <TicketCard ticket={ticket} userPicture={userPicture} />
                         </div>
                     ))}
                 </div>
             </div>
+            {/* Create Modal */}
             {showCreateModal && (
                 <TicketCreateModal
                     statusId={statusId}
@@ -81,13 +78,12 @@ const TicketColumn = ({
                     departments={departments}
                     onClose={(created) => {
                         setShowCreateModal(false);
-                        if (created) {
-                            onTicketCreated();
-                        }
+                        if (created) onTicketCreated();
                     }}
                 />
             )}
         </div>
+
     );
 }
 

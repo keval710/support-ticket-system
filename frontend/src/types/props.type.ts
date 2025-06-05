@@ -2,6 +2,7 @@ import type { Department, Status, Ticket, User } from "../types";
 
 export interface TicketCardProps {
     ticket: Ticket;
+    userPicture?: string;
 }
 
 export interface StatusColumnProps {
@@ -53,5 +54,14 @@ export interface TicketColumnProps {
     departments: Department[];
     onDropTicket?: (ticketId: string, newStatusId: string) => Promise<void>;
     onTicketClick: (ticketId: string) => void;
+    onTicketCreated: () => void;
+}
+
+export interface UnassignedTicketsProps {
+    tickets: Ticket[];
+    departments: Department[];
+    userList: User[];
+    onTicketClick: (id: string) => void;
+    onTicketDrop: (ticketId: string, newStatusId: string) => Promise<void>;
     onTicketCreated: () => void;
 }

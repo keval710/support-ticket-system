@@ -13,19 +13,7 @@ const getAllStatuses = catchAsync(async (_req: Request, res: Response) => {
     res.status(httpStatus.OK).json(statuses);
 });
 
-const updateStatus = catchAsync(async (req: Request, res: Response) => {
-    const status = await statusService.updateStatus(req.params.id, req.body);
-    res.status(httpStatus.OK).json(status);
-});
-
-const deleteStatus = catchAsync(async (req: Request, res: Response) => {
-    const result = await statusService.deleteStatus(req.params.id);
-    res.status(httpStatus.OK).json(result);
-});
-
 export default {
     createStatus,
-    getAllStatuses,
-    updateStatus,
-    deleteStatus,
+    getAllStatuses
 };

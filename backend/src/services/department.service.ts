@@ -1,6 +1,7 @@
 import { Department } from "../model/department"
+import { DepartmentPayload } from "../types/payload.type";
 
-const createDepartment = async (departmentPayload: any) => {
+const createDepartment = async (departmentPayload: DepartmentPayload) => {
     const department = new Department({
         ...departmentPayload
     });

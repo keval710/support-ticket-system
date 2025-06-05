@@ -3,7 +3,6 @@ import authRoute from './auth.route';
 import statusRoute from './status.route';
 import departmentRoute from './department.route';
 import ticketRoute from './ticket.route';
-import escalationRoute from './escalation.route';
 import userRoute from './user.route';
 
 const router = express.Router();
@@ -28,10 +27,6 @@ const defaultRoutes = [
     {
         path: '/department',
         route: departmentRoute
-    },
-    {
-        path: '/escalation',
-        route: escalationRoute
     }
 ];
 

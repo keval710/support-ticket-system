@@ -1,6 +1,6 @@
 import { useState } from "react";
 import TicketColumn from "./TicketColumn";
-import type { UserBoardProps } from "../types";
+import type { UserBoardProps } from "../types/props.type";
 
 const UserBoard = ({
     user,
@@ -36,7 +36,7 @@ const UserBoard = ({
                 {isUpdating && <span className="text-sm text-gray-500">Updating...</span>}
             </div>
             <div className="flex gap-4 overflow-x-auto p-3 w-full scrollbar-hide">
-                {statuses.map((status, index) => (
+                {statuses.map((status) => (
                     <TicketColumn
                         key={status._id}
                         title={status.title}
@@ -48,7 +48,7 @@ const UserBoard = ({
                         onTicketClick={onTicketClick}
                         onTicketCreated={() => onTicketCreated(user._id)}
                         userList={userList}
-                        index={index}
+                        userPicture={user.picture}
                     />
                 ))}
             </div>

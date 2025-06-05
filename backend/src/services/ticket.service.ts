@@ -5,9 +5,10 @@ import { Department } from '../model/department';
 import { FilterQuery } from 'mongoose';
 import { User } from '../model/user';
 import { Status } from '../model/status';
+import { TicketPayload, ticketQueryPayload, updateTicketPayload } from '../types/payload.type';
 
 // Create Ticket
-const createTicket = async (ticketData: any) => {
+const createTicket = async (ticketData: TicketPayload) => {
     if (ticketData.departmentId) {
         const departmentExists = await Department.findOne({ _id: ticketData.departmentId });
         if (!departmentExists) {
@@ -22,14 +23,14 @@ const createTicket = async (ticketData: any) => {
     }
     const ticket = new Ticket({
         ...ticketData,
-        ...(ticketData.departmentId && { department: ticketData.departmentId })
+        ...(ticketData.departmentId && { department: ticketData.departmentId }),
     });
     await ticket.save();
     return ticket
 };
 
 // Get All Tickets
-const getAllTickets = async (queryData: any) => {
+const getAllTickets = async (queryData: ticketQueryPayload) => {
     const {
         departmentId,
         status,
@@ -100,7 +101,7 @@ const updateTicketStatusById = async (ticketId: string, statusId: string) => {
 };
 
 // Update ticket
-const updateTicket = async (id: string, data: any) => {
+const updateTicket = async (id: string, data: updateTicketPayload) => {
     if (data.assignedTo) {
         const user = await User.findById(data.assignedTo);
         if (!user) {

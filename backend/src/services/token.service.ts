@@ -1,7 +1,8 @@
 import jwt from 'jsonwebtoken';
 import config from '../config/config';
+import { tokenPayload } from '../types/payload.type';
 
-const generateToken = (user: any) => {
+const generateToken = (user: tokenPayload) => {
     return jwt.sign(
         { sub: user._id, email: user.email, role: user.role, type: 'access' },
         config.jwt.secret,

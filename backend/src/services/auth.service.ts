@@ -9,6 +9,8 @@ const findOrCreateOAuthUser = async (req: { body: OAuthProfile }) => {
 
     if (user) {
         // User exists — return as-is
+        user.isLoggedIn = true;
+        await user.save();
         return {
             userId: user._id,
             token: tokenService.generateToken(user),
@@ -23,6 +25,7 @@ const findOrCreateOAuthUser = async (req: { body: OAuthProfile }) => {
         role: profile.role || Role.USER,
         registrationType: profile.provider,
         isEmailVerified: profile.isEmailVerified ?? false,
+        isLoggedIn: true
     });
     await newUser.save();
     // Generate token for the new user
@@ -33,6 +36,17 @@ const findOrCreateOAuthUser = async (req: { body: OAuthProfile }) => {
     };
 };
 
+const logout = async (userId: string) => {
+    const user = await User.findById(userId);
+    if (!user) {
+        throw new Error('User not found');
+    }
+    user.isLoggedIn = false;
+    await user.save();
+    return user;
+}
+
 export default {
     findOrCreateOAuthUser,
+    logout
 };

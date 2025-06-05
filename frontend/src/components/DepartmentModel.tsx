@@ -1,6 +1,6 @@
 import { useState, useEffect, type FormEvent } from 'react';
-import type { DepartmentModalProps } from '../types';
-import authApiInterceptor from '../services/axiosInstance/axios.instance';
+import authApiInterceptor from '../services/axiosInstance/auth.instance';
+import type { DepartmentModalProps } from '../types/props.type';
 
 const DepartmentModal = ({ onClose, onCreated }: DepartmentModalProps) => {
     const [name, setName] = useState('');

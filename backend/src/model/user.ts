@@ -19,7 +19,7 @@ const userSchema = new Schema<IUser>({
     provider: {
         type: String,
         enum: Provider,
-        default: Provider.LOCAL
+        default: Provider.GOOGLE
     },
     providerId: {
         type: String,
@@ -31,6 +31,10 @@ const userSchema = new Schema<IUser>({
         default: Role.USER
     },
     isEmailVerified: {
+        type: Boolean,
+        default: false
+    },
+    isLoggedIn: {
         type: Boolean,
         default: false
     }

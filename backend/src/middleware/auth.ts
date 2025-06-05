@@ -20,7 +20,7 @@ const auth = () => async (req: Request, res: Response, next: NextFunction) => {
     if (!user) {
       throw new ApiError(httpStatus.UNAUTHORIZED, 'User not found');
     }
-    req.user = user;
+    (req as any).user = user;
     next();
   } catch (err: any) {
     next(new ApiError(httpStatus.UNAUTHORIZED, 'Invalid or expired token'));

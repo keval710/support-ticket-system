@@ -6,14 +6,10 @@ import { statusController } from '../controller';
 
 const router = express.Router();
 
+// Status Routes
 router
     .route('/')
-    .post(auth(), validate(statusValidation.createOrUpdateStatus), statusController.createStatus)
+    .post(auth(), validate(statusValidation.createStatus), statusController.createStatus)
     .get(auth(), statusController.getAllStatuses);
-
-router
-    .route('/:id')
-    .put(auth(), validate(statusValidation.createOrUpdateStatus), statusController.updateStatus)
-    .delete(auth(), statusController.deleteStatus);
 
 export default router;
