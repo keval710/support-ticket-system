@@ -1,6 +1,8 @@
 import { User } from '../model/user';
 import { Role, OAuthProfile } from '../types';
 import tokenService from './token.service';
+import httpStatus from 'http-status';
+import ApiError from '../utils/ApiError';
 
 const findOrCreateOAuthUser = async (req: { body: OAuthProfile }) => {
     const profile = req.body;
@@ -42,7 +44,7 @@ const findOrCreateOAuthUser = async (req: { body: OAuthProfile }) => {
 const logout = async (userId: string) => {
     const user = await User.findById(userId);
     if (!user) {
-        throw new Error('User not found');
+        throw new ApiError(httpStatus.BAD_REQUEST, 'User not found');
     }
     user.isLoggedIn = false;
     await user.save();
