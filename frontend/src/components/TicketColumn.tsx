@@ -14,6 +14,7 @@ const TicketColumn = ({
     onDropTicket,
     onTicketClick,
     departments,
+    assignedTo,
     onTicketCreated,
 }: TicketColumnProps) => {
     const [showCreateModal, setShowCreateModal] = useState(false);
@@ -76,6 +77,7 @@ const TicketColumn = ({
                     statusId={statusId}
                     userList={userList}
                     departments={departments}
+                    assignedTo={assignedTo}
                     onClose={(created) => {
                         setShowCreateModal(false);
                         if (created) onTicketCreated();

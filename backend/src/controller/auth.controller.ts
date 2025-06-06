@@ -4,12 +4,14 @@ import catchAsync from '../utils/catchAsync';
 
 const oAuthLogin = catchAsync(async (req, res) => {
     const user = await authService.findOrCreateOAuthUser(req);
-    res.status(httpStatus.CREATED).json(user)
+    const statusCode = user.status || httpStatus.CREATED;
+    const { status, ...userWithoutStatus } = user;
+    res.status(statusCode).json(userWithoutStatus);
 });
 
-    const logout = catchAsync(async (req, res) => {
+const logout = catchAsync(async (req, res) => {
     const user = await authService.logout(req.body.userId);
-    res.status(httpStatus.OK).json(user)
+    res.status(httpStatus.NO_CONTENT).json(user);
 })
 
 export default {

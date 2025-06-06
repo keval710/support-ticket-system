@@ -48,6 +48,7 @@ const UserBoard = ({
                         onTicketClick={onTicketClick}
                         onTicketCreated={() => onTicketCreated(user._id)}
                         userList={userList}
+                        assignedTo={user._id}
                         userPicture={user.picture}
                     />
                 ))}

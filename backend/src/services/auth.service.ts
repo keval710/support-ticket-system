@@ -12,6 +12,8 @@ const findOrCreateOAuthUser = async (req: { body: OAuthProfile }) => {
         user.isLoggedIn = true;
         await user.save();
         return {
+            message: 'User login successful',
+            status: 200,
             userId: user._id,
             token: tokenService.generateToken(user),
         };
@@ -31,6 +33,7 @@ const findOrCreateOAuthUser = async (req: { body: OAuthProfile }) => {
     // Generate token for the new user
     const token = tokenService.generateToken(newUser);
     return {
+        message: 'User register successful',
         userId: newUser._id,
         token,
     };

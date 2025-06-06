@@ -7,9 +7,13 @@ import { errorConverter, errorHandler } from "./middleware/error";
 import routes from './routes';
 import config from "./config/config";
 import { initializeSocket } from "./socket/socket";
+import morgan from "morgan";
 
 const app = express();
 const httpServer = createServer(app);
+
+// Log every API request
+app.use(morgan('dev'));
 
 // Initialize Socket.IO
 const io = initializeSocket(httpServer);
@@ -43,6 +47,7 @@ app.use(cors(corsOpts));
 // Make io accessible to routes
 app.set('io', io);
 
+// api routes
 app.use('/api', routes);
 
 // convert error to ApiError, if needed

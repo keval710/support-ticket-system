@@ -84,6 +84,7 @@ export interface TicketColumnProps {
     onTicketClick: (ticketId: string) => void;
     onTicketCreated: () => void;
     userList: User[];
+    assignedTo?: string;
 }
 
 export interface GoogleUser {

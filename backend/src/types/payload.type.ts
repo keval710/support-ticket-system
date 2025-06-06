@@ -37,9 +37,3 @@ export interface ticketQueryPayload {
     limit?: number;
 }
 
-export interface tokenPayload {
-    _id: string;
-    email: string;
-    role: string;
-}
-
